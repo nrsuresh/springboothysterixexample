@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.springboot.hysterix.example</groupId>
+    <artifactId>springboot-hysterix-example</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.3.RELEASE</version>
+    </parent>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <docker.image.prefix>springhysterix</docker.image.prefix>
+
+        <!-- Name of Docker image that will be built. -->
+        <docker.image.name>hysterixexample</docker.image.name>
+        <!--
+            Directory that holds Docker file and static content
+            necessary to build the Docker image.
+        -->
+        <docker.image.src.root>src/main/docker</docker.image.src.root>
+        <!--
+            Directory to which the Docker image artifacts and the Docker
+            file will be copied to and which will serve as the root directory
+            when building the Docker image.
+        -->
+        <docker.build.directory>${project.build.directory}/dockerimgbuild</docker.build.directory>
+        <!-- Name of the Dockerfile the Docker image will be built from. -->
+        <docker.file.name>Dockerfile</docker.file.name>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <!--
+                Copy the directory containing static content to build directory.
+            -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${docker.build.directory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${docker.image.src.root}</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--&lt;!&ndash;
+                Copy the JAR file containing the Spring Boot application
+                to the application/lib directory.
+            &ndash;&gt;
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    &lt;!&ndash;
+                                        Specify groupId, artifactId, version and type for the
+                                        artifact you want to package in the Docker image.
+                                        In the case of a Spring Boot application, these are
+                                        the same as the project group id, artifact id
+                                        and version.
+                                    &ndash;&gt;
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>${project.artifactId}</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${docker.build.directory}/application/lib</outputDirectory>
+                                    &lt;!&ndash;
+                                        Specify the destination name as to have one and the same name
+                                        to refer to in the Dockerfile.
+                                    &ndash;&gt;
+                                    <destFileName>springboot-hysterix-example-1.0-SNAPSHOT.jar</destFileName>
+                                </artifactItem>
+                                &lt;!&ndash; Add additional artifacts to be packaged in the Docker image here. &ndash;&gt;
+
+                            </artifactItems>
+                            <outputDirectory>${docker.build.directory}</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>-->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${docker.build.directory}/application</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>1.3.4</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <contextDirectory>${docker.build.directory}</contextDirectory>
+                    <repository>${docker.image.prefix}/${docker.image.name}</repository>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
